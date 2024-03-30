@@ -55,8 +55,8 @@ class Logica {
             this.tablero[f][pos - 1] = this.tablero[f][col];
             if (pos - 1 != col) {
               this.tablero[f][col] = 0;
+              movida = true;
             }
-            movida = true;
           }
         }
       }
@@ -86,8 +86,8 @@ class Logica {
             this.tablero[f][pos + 1] = this.tablero[f][col];
             if (pos + 1 != col) {
               this.tablero[f][col] = 0;
+              movida = true;
             }
-            movida = true;
           }
         }
       }
@@ -117,8 +117,8 @@ class Logica {
             this.tablero[pos - 1][col] = this.tablero[fila][col];
             if (pos - 1 != fila) {
               this.tablero[fila][col] = 0;
+              movida = true;
             }
-            movida = true;
           }
         }
       }
@@ -148,8 +148,8 @@ class Logica {
             this.tablero[pos + 1][col] = this.tablero[fila][col];
             if (pos + 1 != fila) {
               this.tablero[fila][col] = 0;
+              movida = true;
             }
-            movida = true;
           }
         }
       }
@@ -244,6 +244,26 @@ function handleTouch(event) {
 }
 
 gridContainer.addEventListener('touchstart', handleTouch);
+
+function handleKeyPress(event) {
+  event.preventDefault();
+  switch (event.key) {
+    case 'ArrowUp':
+      mover('arriba');
+      break;
+    case 'ArrowDown':
+      mover('abajo');
+      break;
+    case 'ArrowLeft':
+      mover('izquierda');
+      break;
+    case 'ArrowRight':
+      mover('derecha');
+      break;
+  }
+}
+
+document.addEventListener('keydown', handleKeyPress);
 
 actualizarTablero();
 actualizarPuntaje();
