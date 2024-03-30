@@ -2,6 +2,7 @@ const FILAS = 4;
 const COLUMNAS = 4;
 const gridContainer = document.getElementById('grid-container');
 const scoreDisplay = document.getElementById('score');
+const UMBRAL_MOVIMIENTO = 10; // Umbral en píxeles para considerar un movimiento
 
 class Logica {
   constructor() {
@@ -213,17 +214,20 @@ function handleTouch(event) {
     const xDiff = Math.abs(startX - endX);
     const yDiff = Math.abs(startY - endY);
 
-    if (xDiff > yDiff) {
-      if (startX < endX) {
-        mover('derecha');
+    // Verificar si el movimiento supera el umbral
+    if (xDiff > UMBRAL_MOVIMIENTO || yDiff > UMBRAL_MOVIMIENTO) {
+      if (xDiff > yDiff) {
+        if (startX < endX) {
+          mover('derecha');
+        } else {
+          mover('izquierda');
+        }
       } else {
-        mover('izquierda');
-      }
-    } else {
-      if (startY < endY) {
-        mover('abajo');
-      } else {
-        mover('arriba');
+        if (startY < endY) {
+          mover('abajo');
+        } else {
+          mover('arriba');
+        }
       }
     }
 
