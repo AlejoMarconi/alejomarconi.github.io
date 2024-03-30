@@ -3,7 +3,7 @@ const COLUMNAS = 4;
 const gridContainer = document.getElementById('grid-container');
 const scoreDisplay = document.getElementById('score');
 const UMBRAL_MOVIMIENTO = 10; // Umbral en píxeles para considerar un movimiento
-
+let sonido = document.getElementById('sound');
 
 class Logica {
   constructor() {
@@ -52,7 +52,7 @@ class Logica {
             this.puntaje += this.tablero[f][pos];
             this.tablero[f][col] = 0;
             movida = true;
-            document.getElementById('sound').play();
+            sonido.play();
           } else {
             this.tablero[f][pos - 1] = this.tablero[f][col];
             if (pos - 1 != col) {
@@ -84,7 +84,7 @@ class Logica {
             this.puntaje += this.tablero[f][pos];
             this.tablero[f][col] = 0;
             movida = true;
-            document.getElementById('sound').play();
+            sonido.play();
           } else {
             this.tablero[f][pos + 1] = this.tablero[f][col];
             if (pos + 1 != col) {
@@ -116,7 +116,7 @@ class Logica {
             this.puntaje += this.tablero[pos][col];
             this.tablero[fila][col] = 0;
             movida = true;
-            document.getElementById('sound').play();
+            sonido.play();
           } else {
             this.tablero[pos - 1][col] = this.tablero[fila][col];
             if (pos - 1 != fila) {
@@ -148,7 +148,7 @@ class Logica {
             this.puntaje += this.tablero[pos][col];
             this.tablero[fila][col] = 0;
             movida = true;
-            document.getElementById('sound').play();
+            sonido.play();
           } else {
             this.tablero[pos + 1][col] = this.tablero[fila][col];
             if (pos + 1 != fila) {
