@@ -12,9 +12,18 @@ body {
     background-color: #bbada0;
 }
 
+#score-container {
+    margin-top: 20px;
+    text-align: center;
+}
+
 #game-container {
     max-width: 500px;
     width: 100%;
+    display: flex;
+    justify-content: center; /* Centrado horizontal */
+    align-items: center; /* Centrado vertical */
+    flex-direction: column; /* Apila los elementos verticalmente */
 }
 
 #grid-container {
@@ -27,18 +36,23 @@ body {
     background-color: #eee4da;
     padding: 10px;
     border-radius: 5px;
+    margin-top: 20px;
 }
 
 .cell {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2.5rem;
+    font-size: 1.5em; /* Tamaño de fuente relativo */
     font-weight: bold;
     color: #776e65;
     background-color: #cdc1b4;
     border-radius: 5px;
+    padding: 10px; /* Ajusta el padding según sea necesario */
+    width: 80px; /* Tamaño fijo de la celda en píxeles */
+    height: 80px; /* Tamaño fijo de la celda en píxeles */
 }
+
 
 .cell-2 {
     background-color: #eee4da;
@@ -75,7 +89,7 @@ body {
 }
 
 .cell-256 {
-    background-color: #edcc61;
+    background-color: #ebc64d;
     color: white;
 }
 
@@ -94,7 +108,22 @@ body {
     color: white;
 }
 
-#score-container {
-    margin-top: 20px;
-    text-align: center;
+@keyframes desplazamiento {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
+
+.celda-desplazamiento {
+  animation: desplazamiento 0.2s ease;
+}
+

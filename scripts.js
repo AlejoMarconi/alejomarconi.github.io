@@ -169,9 +169,48 @@ function actualizarTablero() {
     for (let c = 0; c < COLUMNAS; c++) {
       const cell = document.getElementById(`celda-${f}-${c}`);
       cell.textContent = tablero[f][c] === 0 ? '' : tablero[f][c];
+
+      // Aplicar estilos según el valor de la celda
+      cell.className = 'cell'; // Restaurar clase base
+      switch (tablero[f][c]) {
+        case 4:
+          cell.classList.add('cell-4');
+          break;
+        case 8:
+          cell.classList.add('cell-8');
+          break;
+        case 16:
+          cell.classList.add('cell-16');
+          break;
+        case 32:
+          cell.classList.add('cell-32');
+          break;
+        case 64:
+          cell.classList.add('cell-64');
+          break;
+        case 128:
+          cell.classList.add('cell-128');
+          break;
+        case 256:
+          cell.classList.add('cell-256');
+          break;
+        case 512:
+          cell.classList.add('cell-512');
+          break;
+        case 1024:
+          cell.classList.add('cell-1024');
+          break;
+        case 2048:
+          cell.classList.add('cell-2048');
+          break;
+        // Añade más casos según sea necesario para números mayores
+      }
+
+
     }
   }
 }
+
 
 function actualizarPuntaje() {
   scoreDisplay.textContent = logica.puntaje;
@@ -197,8 +236,19 @@ function mover(direccion) {
   if (movida) {
     actualizarTablero();
     actualizarPuntaje();
+
+    // Agregar clase de desplazamiento a todas las celdas
+    const celdas = document.querySelectorAll('.cell');
+    celdas.forEach((celda) => {
+      celda.classList.add('celda-desplazamiento');
+      // Eliminar clase de desplazamiento después de la animación
+      setTimeout(() => {
+        celda.classList.remove('celda-desplazamiento');
+      }, 200); // La animación dura 0.2 segundos
+    });
   }
 }
+
 
 function handleTouchMove(event) {
   event.preventDefault();
