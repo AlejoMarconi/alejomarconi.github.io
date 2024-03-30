@@ -1,0 +1,100 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #bbada0;
+}
+
+#game-container {
+    max-width: 500px;
+    width: 100%;
+}
+
+#grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+    background-color: #eee4da;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #776e65;
+    background-color: #cdc1b4;
+    border-radius: 5px;
+}
+
+.cell-2 {
+    background-color: #eee4da;
+    color: #776e65;
+}
+
+.cell-4 {
+    background-color: #ede0c8;
+}
+
+.cell-8 {
+    background-color: #f2b179;
+    color: white;
+}
+
+.cell-16 {
+    background-color: #f59563;
+    color: white;
+}
+
+.cell-32 {
+    background-color: #f67c5f;
+    color: white;
+}
+
+.cell-64 {
+    background-color: #f65e3b;
+    color: white;
+}
+
+.cell-128 {
+    background-color: #edcf72;
+    color: white;
+}
+
+.cell-256 {
+    background-color: #edcc61;
+    color: white;
+}
+
+.cell-512 {
+    background-color: #edc850;
+    color: white;
+}
+
+.cell-1024 {
+    background-color: #edc53f;
+    color: white;
+}
+
+.cell-2048 {
+    background-color: #edc22e;
+    color: white;
+}
+
+#score-container {
+    margin-top: 20px;
+    text-align: center;
+}
