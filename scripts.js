@@ -200,6 +200,12 @@ function mover(direccion) {
   }
 }
 
+function handleTouchMove(event) {
+  event.preventDefault();
+}
+
+document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
 function handleTouch(event) {
   const touch = event.touches[0];
   const startX = touch.clientX;
