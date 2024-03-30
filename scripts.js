@@ -4,6 +4,7 @@ const gridContainer = document.getElementById('grid-container');
 const scoreDisplay = document.getElementById('score');
 const UMBRAL_MOVIMIENTO = 10; // Umbral en píxeles para considerar un movimiento
 
+
 class Logica {
   constructor() {
     this.tablero = Array(FILAS).fill().map(() => Array(COLUMNAS).fill(0));
@@ -51,6 +52,7 @@ class Logica {
             this.puntaje += this.tablero[f][pos];
             this.tablero[f][col] = 0;
             movida = true;
+            document.getElementById('sound').play();
           } else {
             this.tablero[f][pos - 1] = this.tablero[f][col];
             if (pos - 1 != col) {
@@ -82,6 +84,7 @@ class Logica {
             this.puntaje += this.tablero[f][pos];
             this.tablero[f][col] = 0;
             movida = true;
+            document.getElementById('sound').play();
           } else {
             this.tablero[f][pos + 1] = this.tablero[f][col];
             if (pos + 1 != col) {
@@ -113,6 +116,7 @@ class Logica {
             this.puntaje += this.tablero[pos][col];
             this.tablero[fila][col] = 0;
             movida = true;
+            document.getElementById('sound').play();
           } else {
             this.tablero[pos - 1][col] = this.tablero[fila][col];
             if (pos - 1 != fila) {
@@ -144,6 +148,7 @@ class Logica {
             this.puntaje += this.tablero[pos][col];
             this.tablero[fila][col] = 0;
             movida = true;
+            document.getElementById('sound').play();
           } else {
             this.tablero[pos + 1][col] = this.tablero[fila][col];
             if (pos + 1 != fila) {
@@ -181,7 +186,7 @@ class Logica {
 
 }
 
-let logica = new Logica();
+let  logica = new Logica();
 
 function actualizarTablero() {
     const tablero = logica.getTablero();
