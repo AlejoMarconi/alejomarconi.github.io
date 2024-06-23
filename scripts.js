@@ -108,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!gameOver) {
         showCheatMessage();
   
-        cells.forEach((cell) => {
-          if (cell.classList.contains('mine')) {
-            cell.classList.add('show-mine');
-          }
-        });
+        // cells.forEach((cell) => {
+        //   if (cell.classList.contains('mine')) {
+        //     cell.classList.add('show-mine');
+        //   }
+        // });
       }
     }
   
