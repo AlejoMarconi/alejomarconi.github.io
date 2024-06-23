@@ -158,19 +158,21 @@ document.addEventListener('DOMContentLoaded', () => {
       
       
     function showMines() {
-        const showMinesBtn = document.getElementById('show-mines-btn');
+        
+        alert('Tramposa de mierda');
+        // const showMinesBtn = document.getElementById('show-mines-btn');
     
-        cells.forEach(cell => {
-        if (cell.classList.contains('mine')) {
-            cell.classList.toggle('show-mine');
-        }
-        });
+        // cells.forEach(cell => {
+        // if (cell.classList.contains('mine')) {
+        //     cell.classList.toggle('show-mine');
+        // }
+        // });
     
-        if (showMinesBtn.textContent === 'Mostrar minas') {
-        showMinesBtn.textContent = 'Ocultar minas';
-        } else {
-        showMinesBtn.textContent = 'Mostrar minas';
-        }
+        // if (showMinesBtn.textContent === 'Mostrar minas') {
+        // showMinesBtn.textContent = 'Ocultar minas';
+        // } else {
+        // showMinesBtn.textContent = 'Mostrar minas';
+        // }
     }
       
       document.getElementById('restart-btn').addEventListener('click', restartGame);
