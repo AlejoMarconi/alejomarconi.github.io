@@ -36,48 +36,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     function revealCell(cell) {
-      if (!gameOver && cell.dataset.status === 'hidden') {
-        cell.dataset.status = 'revealed';
-        cell.classList.add('revealed');
-  
-        if (cell.classList.contains('mine')) {
-          gameOver = true;
-  
-          cells.forEach((cell) => {
-            if (cell.classList.contains('mine')) {
-              cell.dataset.status = 'revealed';
-              cell.classList.add('revealed');
+        if (!gameOver && cell.dataset.status === 'hidden') {
+          cell.dataset.status = 'revealed';
+          cell.classList.add('revealed');
+    
+          if (cell.classList.contains('mine')) {
+            gameOver = true;
+    
+            cells.forEach((cell) => {
+              if (cell.classList.contains('mine')) {
+                cell.dataset.status = 'revealed';
+                cell.classList.add('revealed');
+              }
+            });
+    
+            setTimeout(() => {
+              alert('¡Boom! Has pisado una mina.');
+            }, 250);
+          } else {
+            const adjacentMines = countAdjacentMines(cell);
+            if (adjacentMines > 0) {
+              cell.textContent = adjacentMines;
+            } else {
+              revealAdjacentCells(cell);
             }
-          });
-  
-          setTimeout(() => {
-            alert('¡Boom! Has pisado una mina.');
-          }, 250);
-        } else {
-          const adjacentMines = countAdjacentMines(cell);
-          if (adjacentMines > 0) {
-            cell.textContent = adjacentMines;
           }
         }
       }
-    }
-  
-    function countAdjacentMines(cell) {
-      const x = parseInt(cell.dataset.x);
-      const y = parseInt(cell.dataset.y);
-      let count = 0;
-  
-      for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
-        for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
-          const adjacentCell = cells[i * width + j];
-          if (adjacentCell.classList.contains('mine')) {
-            count++;
+    
+      function countAdjacentMines(cell) {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        let count = 0;
+    
+        for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
+          for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
+            const adjacentCell = cells[i * width + j];
+            if (adjacentCell.classList.contains('mine')) {
+              count++;
+            }
+          }
+        }
+    
+        return count;
+      }
+    
+      function revealAdjacentCells(cell) {
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+    
+        for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
+          for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
+            const adjacentCell = cells[i * width + j];
+    
+            if (adjacentCell.dataset.status === 'hidden' && !adjacentCell.classList.contains('mine')) {
+              revealCell(adjacentCell);
+            }
           }
         }
       }
-  
-      return count;
-    }
+    
   
     function showCheatMessage() {
       alert('Tramposa de mierda');
