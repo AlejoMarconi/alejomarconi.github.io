@@ -142,5 +142,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('show-mines-btn').addEventListener('click', () => {
       showMines();
     });
+    
+    gameBoard.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+        if (!gameOver && event.target.classList.contains('cell')) {
+          const cell = event.target;
+          cell.classList.toggle('flagged');
+        }
+      });
   });
   

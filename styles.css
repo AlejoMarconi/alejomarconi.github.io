@@ -56,4 +56,37 @@ body {
     background-color: red;
   }
   
+
+  .flagged {
+    position: relative;
+    background-color: lightgray;
+  }
   
+  .flagged::before,
+  .flagged::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .flagged::before {
+    width: 0px;
+    height: 13px;
+    border-left: 3px solid rgb(90, 53, 18);
+    border-right: 3px solid rgb(90, 53, 18);
+  }
+  
+  .flagged::after {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 12px solid rgb(240, 0, 0);
+    top: 2px;
+    left: 8px;
+    transform: rotate(-85deg);
+  }
+  
+    
