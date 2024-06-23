@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const mines = 10;
     const cells = [];
     let gameOver = false;
+    let timerInterval;
+    let secondsPassed = 0;
   
     function createBoard() {
       for (let y = 0; y < height; y++) {
@@ -36,66 +38,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     function revealCell(cell) {
-        if (!gameOver && cell.dataset.status === 'hidden') {
-          cell.dataset.status = 'revealed';
-          cell.classList.add('revealed');
-    
-          if (cell.classList.contains('mine')) {
-            gameOver = true;
-    
-            cells.forEach((cell) => {
-              if (cell.classList.contains('mine')) {
-                cell.dataset.status = 'revealed';
-                cell.classList.add('revealed');
-              }
-            });
-    
-            setTimeout(() => {
-              alert('¡Boom! Has pisado una mina.');
-            }, 250);
+      if (!gameOver && cell.dataset.status === 'hidden') {
+        cell.dataset.status = 'revealed';
+        cell.classList.add('revealed');
+  
+        if (cell.classList.contains('mine')) {
+          gameOver = true;
+  
+          cells.forEach((cell) => {
+            if (cell.classList.contains('mine')) {
+              cell.dataset.status = 'revealed';
+              cell.classList.add('revealed');
+            }
+          });
+  
+          stopTimer();
+  
+          setTimeout(() => {
+            alert('¡Boom! Has pisado una mina.');
+          }, 250);
+        } else {
+          const adjacentMines = countAdjacentMines(cell);
+          if (adjacentMines > 0) {
+            cell.textContent = adjacentMines;
           } else {
-            const adjacentMines = countAdjacentMines(cell);
-            if (adjacentMines > 0) {
-              cell.textContent = adjacentMines;
-            } else {
-              revealAdjacentCells(cell);
-            }
+            revealAdjacentCells(cell);
           }
         }
       }
-    
-      function countAdjacentMines(cell) {
-        const x = parseInt(cell.dataset.x);
-        const y = parseInt(cell.dataset.y);
-        let count = 0;
-    
-        for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
-          for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
-            const adjacentCell = cells[i * width + j];
-            if (adjacentCell.classList.contains('mine')) {
-              count++;
-            }
-          }
-        }
-    
-        return count;
-      }
-    
-      function revealAdjacentCells(cell) {
-        const x = parseInt(cell.dataset.x);
-        const y = parseInt(cell.dataset.y);
-    
-        for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
-          for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
-            const adjacentCell = cells[i * width + j];
-    
-            if (adjacentCell.dataset.status === 'hidden' && !adjacentCell.classList.contains('mine')) {
-              revealCell(adjacentCell);
-            }
+    }
+  
+    function countAdjacentMines(cell) {
+      const x = parseInt(cell.dataset.x);
+      const y = parseInt(cell.dataset.y);
+      let count = 0;
+  
+      for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
+        for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
+          const adjacentCell = cells[i * width + j];
+          if (adjacentCell.classList.contains('mine')) {
+            count++;
           }
         }
       }
-    
+  
+      return count;
+    }
+  
+    function revealAdjacentCells(cell) {
+      const x = parseInt(cell.dataset.x);
+      const y = parseInt(cell.dataset.y);
+  
+      for (let i = Math.max(0, y - 1); i <= Math.min(height - 1, y + 1); i++) {
+        for (let j = Math.max(0, x - 1); j <= Math.min(width - 1, x + 1); j++) {
+          const adjacentCell = cells[i * width + j];
+  
+          if (adjacentCell.dataset.status === 'hidden' && !adjacentCell.classList.contains('mine')) {
+            revealCell(adjacentCell);
+          }
+        }
+      }
+    }
   
     function showCheatMessage() {
       alert('Tramposa de mierda');
@@ -105,11 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!gameOver) {
         showCheatMessage();
   
-        // cells.forEach((cell) => {
-        //   if (cell.classList.contains('mine')) {
-        //     cell.classList.add('show-mine');
-        //   }
-        // });
+        cells.forEach((cell) => {
+          if (cell.classList.contains('mine')) {
+            cell.classList.add('show-mine');
+          }
+        });
       }
     }
   
@@ -122,33 +125,82 @@ document.addEventListener('DOMContentLoaded', () => {
   
       gameOver = false;
       placeMines();
+      resetTimer();
+    }
+  
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        secondsPassed++;
+        const minutes = Math.floor(secondsPassed / 60);
+        const seconds = secondsPassed % 60;
+        document.getElementById('timer').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }, 1000);
+    }
+  
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+  
+    function resetTimer() {
+      stopTimer();
+      secondsPassed = 0;
+      document.getElementById('timer').textContent = '0:00';
     }
   
     createBoard();
     placeMines();
   
+
+    function checkWin() {
+        let revealedCells = 0;
+      
+        cells.forEach(cell => {
+          if (cell.dataset.status === 'revealed' && !cell.classList.contains('mine')) {
+            revealedCells++;
+          }
+        });
+      
+        if (revealedCells === width * height - mines) {
+          alert('¡Felicidades! Has ganado el Buscaminas.');
+          gameOver = true;
+          stopTimer();
+        }
+      }
+      
+
     gameBoard.addEventListener('click', (event) => {
       if (!gameOver && event.target.classList.contains('cell')) {
+        if (!timerInterval) {
+          startTimer();
+        }
         const cell = event.target;
+        if (cell.dataset.status === 'hidden') {
+            revealCell(cell);
+    
+            if (countAdjacentMines(cell) === 0) {
+              revealAdjacentCells(cell);
+            }
+    
+            checkWin();
+          }
+        }
+      });
   
-        revealCell(cell);
+    gameBoard.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      if (!gameOver && event.target.classList.contains('cell')) {
+        const cell = event.target;
+        cell.classList.toggle('flagged');
       }
     });
   
     document.getElementById('restart-btn').addEventListener('click', () => {
+      resetTimer();
       restartGame();
     });
   
     document.getElementById('show-mines-btn').addEventListener('click', () => {
       showMines();
     });
-    
-    gameBoard.addEventListener('contextmenu', (event) => {
-        event.preventDefault();
-        if (!gameOver && event.target.classList.contains('cell')) {
-          const cell = event.target;
-          cell.classList.toggle('flagged');
-        }
-      });
   });
   
