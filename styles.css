@@ -47,7 +47,12 @@ body {
   }
 
   
-.mine.show-mine {
+    .mine.show-mine {
+        background-color: red;
+    }
+  
+
+  .mine.revealed {
     background-color: red;
   }
   

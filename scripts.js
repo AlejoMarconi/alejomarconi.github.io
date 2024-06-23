@@ -35,21 +35,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   
     function revealCell(cell) {
-      if (cell.dataset.status === 'hidden') {
-        cell.dataset.status = 'revealed';
-        cell.classList.add('revealed');
-  
-        if (cell.classList.contains('mine')) {
-          alert('¡Boom! Has pisado una mina.');
-        } else {
-          const adjacentMines = countAdjacentMines(cell);
-          if (adjacentMines > 0) {
-            cell.textContent = adjacentMines;
+        if (cell.dataset.status === 'hidden') {
+          cell.dataset.status = 'revealed';
+          cell.classList.add('revealed');
+      
+          if (cell.classList.contains('mine')) {
+            // Mostrar todas las minas
+            cells.forEach((cell) => {
+              if (cell.classList.contains('mine')) {
+                cell.dataset.status = 'revealed';
+                cell.classList.add('revealed');
+              }
+            });
+      
+            // Esperar un breve momento antes de mostrar el mensaje de derrota
+            setTimeout(() => {
+              alert('¡Boom! Has pisado una mina.');
+            }, 250);
+          } else {
+            const adjacentMines = countAdjacentMines(cell);
+            if (adjacentMines > 0) {
+              cell.textContent = adjacentMines;
+            }
           }
         }
       }
-    }
-  
+      
     function countAdjacentMines(cell) {
       const x = parseInt(cell.dataset.x);
       const y = parseInt(cell.dataset.y);
