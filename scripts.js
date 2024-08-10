@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameBoard = document.getElementById('game-board');
     const width = 10;
     const height = 10;
-    const mines = 10;
+    const mines = 0;
     const cells = [];
     let gameOver = false;
     let timerInterval;
