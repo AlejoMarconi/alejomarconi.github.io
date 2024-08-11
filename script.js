@@ -222,6 +222,7 @@ function update(time = 0) {
     if (dropCounter > dropInterval) {
         moveDown();
         dropCounter = 0;
+        console.log('Tetromino movido hacia abajo');  // Verificar si se llama a moveDown
     }
 
     drawBoard();
@@ -276,11 +277,11 @@ document.addEventListener('keyup', event => {
 
 document.getElementById('restart-button').addEventListener('click', restartGame);
 
-document.addEventListener('touchstart', handleTouchStart, false);
-document.addEventListener('touchmove', handleTouchMove, false);
-document.addEventListener('touchend', handleTouchEnd, false);
+const MOVE_THRESHOLD = 15;  // Ajusta el umbral según sea necesario
+const MOVE_COOLDOWN = 100;  // Tiempo en milisegundos entre movimientos
 
-let touchStartX, touchStartY;
+let lastMoveTime = 0;
+let isDragging = false;
 
 function handleTouchStart(event) {
     const touch = event.touches[0];
@@ -289,7 +290,7 @@ function handleTouchStart(event) {
 }
 
 function handleTouchMove(event) {
-    if (gameOver) return;
+    event.preventDefault();  // Previene el comportamiento predeterminado del navegador
 
     const touch = event.touches[0];
     const touchEndX = touch.clientX;
@@ -298,32 +299,45 @@ function handleTouchMove(event) {
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
 
+    const now = Date.now();
+
+    if (now - lastMoveTime < MOVE_COOLDOWN) {
+        return;  // Ignora movimientos si el tiempo de enfriamiento no ha pasado
+    }
+
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 10) {
-            console.log("Version 5")
-            moveRight();
-        } else if (deltaX < -10) {
-            moveLeft();
-            console.log("Version 5")
+        if (Math.abs(deltaX) > MOVE_THRESHOLD) {
+            lastMoveTime = now;  // Actualiza el tiempo de la última acción
+            if (deltaX > MOVE_THRESHOLD) {
+                moveRight();
+            } else if (deltaX < -MOVE_THRESHOLD) {
+                moveLeft();
+            }
+            isDragging = true;
         }
     } else {
-        if (deltaY > 10) {
-            moveDown();
-            console.log("Version 5")
+        if (Math.abs(deltaY) > MOVE_THRESHOLD) {
+            lastMoveTime = now;  // Actualiza el tiempo de la última acción
+            if (deltaY > MOVE_THRESHOLD) {
+                moveDown();
+            }
+            isDragging = true;
         }
     }
-    touchStartX = touchEndX;
-    touchStartY = touchEndY;
 }
 
 function handleTouchEnd(event) {
-    if (gameOver) return;
-
-    const touchEnd = event.changedTouches[0];
-    if (touchEnd.clientX === touchStartX && touchEnd.clientY === touchStartY) {
+    if (isDragging) {
+        isDragging = false;
+    } else if (Date.now() - lastMoveTime >= MOVE_COOLDOWN) {
         rotate();
     }
 }
 
-// Iniciar la animación
-requestAnimationFrame(update);
+// Agrega los listeners de eventos táctiles
+document.addEventListener('touchstart', handleTouchStart, false);
+document.addEventListener('touchmove', handleTouchMove, false);
+document.addEventListener('touchend', handleTouchEnd, false);
+
+// Inicializa el juego
+update();
