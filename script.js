@@ -300,13 +300,16 @@ function handleTouchMove(event) {
 
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
         if (deltaX > 10) {
+            console.log("Version 5")
             moveRight();
         } else if (deltaX < -10) {
             moveLeft();
+            console.log("Version 5")
         }
     } else {
         if (deltaY > 10) {
             moveDown();
+            console.log("Version 5")
         }
     }
     touchStartX = touchEndX;
