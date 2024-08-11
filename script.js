@@ -279,7 +279,7 @@ document.addEventListener('keyup', event => {
 
 document.getElementById('restart-button').addEventListener('click', restartGame);
 
-const MOVE_THRESHOLD = 15;  // Ajusta el umbral según sea necesario
+const MOVE_THRESHOLD = 35;  // Ajusta el umbral según sea necesario
 const MOVE_COOLDOWN = 100;  // Tiempo en milisegundos entre movimientos
 
 let lastMoveTime = 0;
