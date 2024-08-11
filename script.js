@@ -282,6 +282,7 @@ const MOVE_COOLDOWN = 100;  // Tiempo en milisegundos entre movimientos
 
 let lastMoveTime = 0;
 let isDragging = false;
+let touchStartX, touchStartY;
 
 function handleTouchStart(event) {
     event.preventDefault();  // Previene el comportamiento predeterminado
@@ -296,44 +297,44 @@ function handleTouchMove(event) {
         const touch = event.touches[0];
         const deltaX = touch.clientX - touchStartX;
         const deltaY = touch.clientY - touchStartY;
-        const now = Date.now();
 
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            if (Math.abs(deltaX) > MOVE_THRESHOLD) {
-                if (now - lastMoveTime >= MOVE_COOLDOWN) {
-                    lastMoveTime = now;
-                    if (deltaX > MOVE_THRESHOLD) {
-                        moveRight();
-                    } else if (deltaX < -MOVE_THRESHOLD) {
-                        moveLeft();
-                    }
-                    isDragging = true;
-                }
-            }
-        } else {
-            if (Math.abs(deltaY) > MOVE_THRESHOLD) {
-                if (now - lastMoveTime >= MOVE_COOLDOWN) {
-                    lastMoveTime = now;
-                    if (deltaY > MOVE_THRESHOLD) {
-                        moveDown();
-                    }
-                    isDragging = true;
-                }
-            }
+        if (Math.abs(deltaX) > MOVE_THRESHOLD || Math.abs(deltaY) > MOVE_THRESHOLD) {
+            isDragging = true;
         }
     }
 }
 
 function handleTouchEnd(event) {
-    if (isDragging) {
-        isDragging = false;
-    } else if (Date.now() - lastMoveTime >= MOVE_COOLDOWN) {
-        rotate();
+    if (!isDragging) return;
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - touchStartX;
+    const deltaY = touch.clientY - touchStartY;
+
+    if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        if (deltaY > MOVE_THRESHOLD) {
+            // Deslizar hacia abajo
+            const currentTime = Date.now();
+            if (currentTime - lastMoveTime > MOVE_COOLDOWN) {
+                moveDown();
+                lastMoveTime = currentTime;
+            }
+        }
+    } else {
+        if (deltaX > MOVE_THRESHOLD) {
+            // Deslizar hacia la derecha
+            moveRight();
+        } else if (deltaX < -MOVE_THRESHOLD) {
+            // Deslizar hacia la izquierda
+            moveLeft();
+        }
     }
+
+    isDragging = false;
 }
 
-document.addEventListener('touchstart', handleTouchStart, false);
-document.addEventListener('touchmove', handleTouchMove, false);
-document.addEventListener('touchend', handleTouchEnd, false);
+canvas.addEventListener('touchstart', handleTouchStart);
+canvas.addEventListener('touchmove', handleTouchMove);
+canvas.addEventListener('touchend', handleTouchEnd);
 
-update();
+requestAnimationFrame(update);
