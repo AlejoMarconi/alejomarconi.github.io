@@ -279,33 +279,16 @@ let touchStartX, touchStartY;
 let touchStartTime;
 let touchMoveInterval;
 
-function handleTouchStart(event) {
-    const touch = event.touches[0];
-    touchStartX = touch.clientX;
-    touchStartY = touch.clientY;
-    touchStartTime = Date.now();
-
-    // Iniciar el intervalo de bajada rápida
-    touchMoveInterval = setInterval(() => {
-        if (!isFastDrop) {
-            isFastDrop = true;
-            dropInterval = DROP_INTERVAL_FAST;
-        }
-        dropCounter += DROP_INTERVAL_FAST;
-        update();  // Llama a la función de actualización para mover la pieza hacia abajo
-    }, DROP_INTERVAL_FAST);
-}
-
 function handleTouchMove(event) {
     event.preventDefault();  // Previene el comportamiento predeterminado del navegador
-
+    
     const touch = event.touches[0];
     const touchEndX = touch.clientX;
     const touchEndY = touch.clientY;
-
+    
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
-
+    
     const now = Date.now();
 
     if (now - lastMoveTime < MOVE_COOLDOWN) {
@@ -333,18 +316,20 @@ function handleTouchMove(event) {
     }
 }
 
+function handleTouchStart(event) {
+    event.preventDefault();  // Previene el comportamiento predeterminado del navegador
+    touchStartTime = Date.now();
+    touchMoveInterval = setInterval(() => {
+        moveDown();
+    }, 100);  // Cambia la frecuencia de bajada automática según tus necesidades
+}
+
 function handleTouchEnd(event) {
     clearInterval(touchMoveInterval);  // Detén el intervalo de bajada rápida
-
-    if (isDragging) {
-        isDragging = false;
-        isFastDrop = false;
-        dropInterval = DROP_INTERVAL_NORMAL;  // Restablecer la velocidad cuando se suelta
-    } else if (Date.now() - touchStartTime >= MOVE_COOLDOWN) {
+    if (Date.now() - touchStartTime < 200) {  // Solo rota si el toque fue breve
         rotate();
     }
 }
-
 // Agrega los listeners de eventos táctiles
 document.addEventListener('touchstart', handleTouchStart, false);
 document.addEventListener('touchmove', handleTouchMove, false);
