@@ -282,6 +282,7 @@ const MOVE_COOLDOWN = 100;  // Tiempo en milisegundos entre movimientos
 
 let lastMoveTime = 0;
 let isDragging = false;
+let touchStartX, touchStartY;
 
 function handleTouchStart(event) {
     const touch = event.touches[0];
