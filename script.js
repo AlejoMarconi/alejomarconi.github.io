@@ -299,13 +299,13 @@ function handleTouchMove(event) {
     const deltaY = touchEndY - touchStartY;
 
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 50) {
+        if (deltaX > 10) {
             moveRight();
-        } else if (deltaX < -50) {
+        } else if (deltaX < -10) {
             moveLeft();
         }
     } else {
-        if (deltaY > 50) {
+        if (deltaY > 10) {
             moveDown();
         }
     }
