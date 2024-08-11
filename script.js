@@ -68,7 +68,6 @@ let lastTime = 0;
 let gameOver = false;
 let isFastDrop = false;
 
-//Dibuja el tablero de juego en el canvas.
 function drawBoard() {
     context.clearRect(0, 0, canvas.width, canvas.height);
     board.forEach((row, y) => {
@@ -84,7 +83,6 @@ function drawBoard() {
     });
 }
 
-//Dibuja el tetromino actual en el canvas.
 function drawTetromino() {
     tetromino.shape.forEach((row, y) => {
         row.forEach((value, x) => {
@@ -104,7 +102,6 @@ function getRandomShape() {
     return tetrominoes[rand];
 }
 
-//Mueve el tetromino hacia abajo y verifica colisiones.
 function moveDown() {
     tetromino.y++;
     if (collides()) {
@@ -135,8 +132,6 @@ function moveRight() {
     }
 }
 
-
-//Rota el tetromino y verifica colisiones.
 function rotate() {
     const previousShape = tetromino.shape;
     const N = tetromino.shape.length;
@@ -163,7 +158,6 @@ function rotate() {
     }
 }
 
-// Verifica si el tetromino actual colisiona con el tablero o los bordes.
 function collides() {
     return tetromino.shape.some((row, y) => {
         return row.some((value, x) => {
@@ -182,7 +176,6 @@ function collides() {
     });
 }
 
-// Fusiona el tetromino en el tablero.
 function merge() {
     tetromino.shape.forEach((row, y) => {
         row.forEach((value, x) => {
@@ -193,14 +186,12 @@ function merge() {
     });
 }
 
-// Resetea el tetromino actual a una nueva forma.
 function resetTetromino() {
     tetromino.shape = getRandomShape();
     tetromino.x = 3;
     tetromino.y = 0;
 }
 
-// Elimina las líneas completas del tablero.
 function clearLines() {
     let linesCleared = 0;
     for (let y = rows - 1; y >= 0; y--) {
@@ -214,7 +205,6 @@ function clearLines() {
     return linesCleared;
 }
 
-// Actualiza el puntaje en función de las líneas eliminadas.
 function updateScore(linesCleared) {
     if (linesCleared > 0) {
         // Cada línea eliminada otorga 100 puntos
@@ -223,7 +213,6 @@ function updateScore(linesCleared) {
     }
 }
 
-// Actualiza el juego, mueve el tetromino y dibuja el tablero.
 function update(time = 0) {
     if (gameOver) return;
 
@@ -242,7 +231,6 @@ function update(time = 0) {
     requestAnimationFrame(update);
 }
 
-// Reinicia el juego.
 function restartGame() {
     board = Array.from({ length: rows }, () => Array(cols).fill(0));
     score = 0;
@@ -267,28 +255,53 @@ function hideGameOverScreen() {
     document.getElementById('game-over-screen').style.display = 'none';
 }
 
-// Configuración para el control táctil
+document.addEventListener('keydown', event => {
+    if (gameOver) return;
+
+    if (event.key === 'ArrowLeft') {
+        moveLeft();
+    } else if (event.key === 'ArrowRight') {
+        moveRight();
+    } else if (event.key === 'ArrowUp' || event.key === ' ') {  // 'ArrowUp' o 'espacio' para rotar
+        rotate();
+    } else if (event.key === 'ArrowDown') {
+        isFastDrop = true;
+        dropInterval = 50;  // Aumentar la velocidad cuando se presiona 'abajo'
+    }
+});
+
+document.addEventListener('keyup', event => {
+    if (event.key === 'ArrowDown') {
+        isFastDrop = false;
+        dropInterval = 500;  // Restablecer la velocidad cuando se suelta 'abajo'
+    }
+});
+
+document.getElementById('restart-button').addEventListener('click', restartGame);
+
 const MOVE_THRESHOLD = 15;  // Ajusta el umbral según sea necesario
 const MOVE_COOLDOWN = 100;  // Tiempo en milisegundos entre movimientos
-const DROP_INTERVAL_FAST = 50; // Intervalo rápido para la bajada
-const DROP_INTERVAL_NORMAL = 500; // Intervalo normal para la bajada
 
 let lastMoveTime = 0;
 let isDragging = false;
 let touchStartX, touchStartY;
-let touchStartTime;
-let touchMoveInterval;
+
+function handleTouchStart(event) {
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}
 
 function handleTouchMove(event) {
     event.preventDefault();  // Previene el comportamiento predeterminado del navegador
-    
+
     const touch = event.touches[0];
     const touchEndX = touch.clientX;
     const touchEndY = touch.clientY;
-    
+
     const deltaX = touchEndX - touchStartX;
     const deltaY = touchEndY - touchStartY;
-    
+
     const now = Date.now();
 
     if (now - lastMoveTime < MOVE_COOLDOWN) {
@@ -309,37 +322,28 @@ function handleTouchMove(event) {
         if (Math.abs(deltaY) > MOVE_THRESHOLD) {
             lastMoveTime = now;  // Actualiza el tiempo de la última acción
             if (deltaY > MOVE_THRESHOLD) {
-                // Este bloque se maneja con el intervalo de bajada
+                isFastDrop = true;
+                dropInterval = 50;  // Aumentar la velocidad cuando se presiona 'abajo'
             }
             isDragging = true;
         }
     }
 }
 
-function handleTouchStart(event) {
-    event.preventDefault();  // Previene el comportamiento predeterminado del navegador
-    touchStartTime = Date.now();
-    touchStartX = event.touches[0].clientX;  // Registra la posición inicial del toque
-    touchMoveInterval = setInterval(() => {
-        if (Math.abs(touchStartX - event.touches[0].clientX) < 10) {
-            moveDown();
-        }
-    }, 100);  // Cambia la frecuencia de bajada automática según tus necesidades
-}
-
 function handleTouchEnd(event) {
-    clearInterval(touchMoveInterval);  // Detén el intervalo de bajada rápida
-    if (Date.now() - touchStartTime < 200) {  // Solo rota si el toque fue breve
+    if (isDragging) {
+        isDragging = false;
+        isFastDrop = false;
+        dropInterval = 500;  // Restablecer la velocidad cuando se suelta 'abajo'
+    } else if (Date.now() - lastMoveTime >= MOVE_COOLDOWN) {
         rotate();
     }
 }
+
 // Agrega los listeners de eventos táctiles
 document.addEventListener('touchstart', handleTouchStart, false);
 document.addEventListener('touchmove', handleTouchMove, false);
 document.addEventListener('touchend', handleTouchEnd, false);
 
-// Configura el botón de reinicio
-document.getElementById('restart-button').addEventListener('click', restartGame);
-
-// Inicia el juego
-requestAnimationFrame(update);
+// Inicializa el juego
+update();
