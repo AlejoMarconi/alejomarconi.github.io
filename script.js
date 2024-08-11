@@ -140,18 +140,18 @@ function rotate() {
         tetromino.shape.map(row => row[index]).reverse()
     );
 
-    const previousX = tetromino.x;
-    let offset = 0;
-
     tetromino.shape = rotatedShape;
 
+    // Verificar colisiones tras la rotación
+    const originalX = tetromino.x;
+    let offset = 0;
     while (collides()) {
-        tetromino.x = previousX + offset;
         offset++;
+        tetromino.x = originalX + offset;
 
         if (offset > N) {
             tetromino.shape = previousShape;
-            tetromino.x = previousX;
+            tetromino.x = originalX;
             break;
         }
     }
@@ -222,6 +222,7 @@ function update(time = 0) {
     if (dropCounter > dropInterval) {
         moveDown();
         dropCounter = 0;
+        console.log('Tetromino movido hacia abajo');  // Verificar si se llama a moveDown
     }
 
     drawBoard();
@@ -279,38 +280,64 @@ document.getElementById('restart-button').addEventListener('click', restartGame)
 const MOVE_THRESHOLD = 15;  // Ajusta el umbral según sea necesario
 const MOVE_COOLDOWN = 100;  // Tiempo en milisegundos entre movimientos
 
-let touchStartX = 0;
-let touchStartY = 0;
 let lastMoveTime = 0;
+let isDragging = false;
 
-document.addEventListener('touchstart', event => {
-    touchStartX = event.touches[0].clientX;
-    touchStartY = event.touches[0].clientY;
-});
+function handleTouchStart(event) {
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
+}
 
-document.addEventListener('touchend', event => {
-    const touchEndX = event.changedTouches[0].clientX;
-    const touchEndY = event.changedTouches[0].clientY;
-    const timeNow = Date.now();
+function handleTouchMove(event) {
+    event.preventDefault();  // Previene el comportamiento predeterminado del navegador
 
-    if (timeNow - lastMoveTime < MOVE_COOLDOWN) return;  // Evitar movimientos muy rápidos
+    const touch = event.touches[0];
+    const touchEndX = touch.clientX;
+    const touchEndY = touch.clientY;
 
-    const dx = touchEndX - touchStartX;
-    const dy = touchEndY - touchStartY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
 
-    if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > MOVE_THRESHOLD) {
-            moveRight();
-        } else if (dx < -MOVE_THRESHOLD) {
-            moveLeft();
-        }
-    } else {
-        if (dy > MOVE_THRESHOLD) {
-            moveDown();
-        }
+    const now = Date.now();
+
+    if (now - lastMoveTime < MOVE_COOLDOWN) {
+        return;  // Ignora movimientos si el tiempo de enfriamiento no ha pasado
     }
 
-    lastMoveTime = timeNow;
-});
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        if (Math.abs(deltaX) > MOVE_THRESHOLD) {
+            lastMoveTime = now;  // Actualiza el tiempo de la última acción
+            if (deltaX > MOVE_THRESHOLD) {
+                moveRight();
+            } else if (deltaX < -MOVE_THRESHOLD) {
+                moveLeft();
+            }
+            isDragging = true;
+        }
+    } else {
+        if (Math.abs(deltaY) > MOVE_THRESHOLD) {
+            lastMoveTime = now;  // Actualiza el tiempo de la última acción
+            if (deltaY > MOVE_THRESHOLD) {
+                moveDown();
+            }
+            isDragging = true;
+        }
+    }
+}
 
-requestAnimationFrame(update);
+function handleTouchEnd(event) {
+    if (isDragging) {
+        isDragging = false;
+    } else if (Date.now() - lastMoveTime >= MOVE_COOLDOWN) {
+        rotate();
+    }
+}
+
+// Agrega los listeners de eventos táctiles
+document.addEventListener('touchstart', handleTouchStart, false);
+document.addEventListener('touchmove', handleTouchMove, false);
+document.addEventListener('touchend', handleTouchEnd, false);
+
+// Inicializa el juego
+update();
