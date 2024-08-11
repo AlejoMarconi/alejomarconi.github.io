@@ -66,6 +66,7 @@ let dropCounter = 0;
 let dropInterval = 500;  // Intervalo normal
 let lastTime = 0;
 let gameOver = false;
+let isFastDrop = false;
 
 function drawBoard() {
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -264,13 +265,14 @@ document.addEventListener('keydown', event => {
     } else if (event.key === 'ArrowUp' || event.key === ' ') {  // 'ArrowUp' o 'espacio' para rotar
         rotate();
     } else if (event.key === 'ArrowDown') {
-        moveDown();
+        isFastDrop = true;
         dropInterval = 50;  // Aumentar la velocidad cuando se presiona 'abajo'
     }
 });
 
 document.addEventListener('keyup', event => {
     if (event.key === 'ArrowDown') {
+        isFastDrop = false;
         dropInterval = 500;  // Restablecer la velocidad cuando se suelta 'abajo'
     }
 });
@@ -320,7 +322,8 @@ function handleTouchMove(event) {
         if (Math.abs(deltaY) > MOVE_THRESHOLD) {
             lastMoveTime = now;  // Actualiza el tiempo de la última acción
             if (deltaY > MOVE_THRESHOLD) {
-                moveDown();
+                isFastDrop = true;
+                dropInterval = 50;  // Aumentar la velocidad cuando se presiona 'abajo'
             }
             isDragging = true;
         }
@@ -330,6 +333,8 @@ function handleTouchMove(event) {
 function handleTouchEnd(event) {
     if (isDragging) {
         isDragging = false;
+        isFastDrop = false;
+        dropInterval = 500;  // Restablecer la velocidad cuando se suelta 'abajo'
     } else if (Date.now() - lastMoveTime >= MOVE_COOLDOWN) {
         rotate();
     }
