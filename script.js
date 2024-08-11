@@ -319,8 +319,11 @@ function handleTouchMove(event) {
 function handleTouchStart(event) {
     event.preventDefault();  // Previene el comportamiento predeterminado del navegador
     touchStartTime = Date.now();
+    touchStartX = event.touches[0].clientX;  // Registra la posición inicial del toque
     touchMoveInterval = setInterval(() => {
-        moveDown();
+        if (Math.abs(touchStartX - event.touches[0].clientX) < 10) {
+            moveDown();
+        }
     }, 100);  // Cambia la frecuencia de bajada automática según tus necesidades
 }
 
