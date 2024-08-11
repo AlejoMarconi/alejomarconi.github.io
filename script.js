@@ -140,18 +140,18 @@ function rotate() {
         tetromino.shape.map(row => row[index]).reverse()
     );
 
+    const previousX = tetromino.x;
+    let offset = 0;
+
     tetromino.shape = rotatedShape;
 
-    // Verificar colisiones tras la rotación
-    const originalX = tetromino.x;
-    let offset = 0;
     while (collides()) {
+        tetromino.x = previousX + offset;
         offset++;
-        tetromino.x = originalX + offset;
 
         if (offset > N) {
             tetromino.shape = previousShape;
-            tetromino.x = originalX;
+            tetromino.x = previousX;
             break;
         }
     }
