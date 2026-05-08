@@ -1,0 +1,57 @@
+name: Update train schedules
+
+# Runs weekly to fetch the latest official Metrovias Urquiza schedule PDF,
+# regenerate src/data/trainSchedules.json, and commit any changes back to
+# the repository.
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC (~03:00 Buenos Aires)
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "pdfplumber==0.11.9"
+
+      - name: Fetch PDF and rebuild trainSchedules.json
+        id: rebuild
+        run: python scripts/update_schedules.py
+
+      - name: Detect changes
+        id: changes
+        run: |
+          if git diff --quiet -- src/data/trainSchedules.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes to trainSchedules.json"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "trainSchedules.json was updated"
+            git --no-pager diff --stat -- src/data/trainSchedules.json
+          fi
+
+      - name: Commit and push changes
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/trainSchedules.json
+          git commit -m "Update trainSchedules.json from official Metrovias PDF ($(date -u +%Y-%m-%d))"
+          git push
