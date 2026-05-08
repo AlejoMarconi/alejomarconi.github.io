@@ -95,6 +95,103 @@ function safeFilename(alarm) {
 }
 
 /**
+ * Build an .ics for an in-train trip. The single VEVENT carries TWO
+ * VALARM blocks so the OS rings once 5 min before arrival and once at
+ * arrival.
+ */
+export function buildTripICS(trip) {
+  const arrival = new Date(trip.arrivalEpoch);
+  const arrivalEnd = new Date(trip.arrivalEpoch + 60 * 1000);
+  const stamp = toICSUtc(new Date());
+  const dtStart = toICSUtc(arrival);
+  const dtEnd = toICSUtc(arrivalEnd);
+  const uid = `trip-${trip.originName}-${trip.destinationName}-${trip.arrivalEpoch}@urquiza-trenes`;
+
+  const dirLabel =
+    trip.direction === 'a_lemos' ? 'Gral. Lemos' : 'F. Lacroze';
+  const summary = `Llegada a ${trip.destinationName}`;
+  const description = `Viaje en el Urquiza desde ${trip.originName} hacia ${trip.destinationName} (sentido ${dirLabel}). Sale a las ${trip.trainTime}.`;
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Tren Urquiza//ES//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${stamp}`,
+    `DTSTART:${dtStart}`,
+    `DTEND:${dtEnd}`,
+    `SUMMARY:${escapeICS(summary)}`,
+    `DESCRIPTION:${escapeICS(description)}`,
+    `LOCATION:${escapeICS(`Estación ${trip.destinationName}`)}`,
+    'BEGIN:VALARM',
+    'TRIGGER:-PT5M',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${escapeICS(`5 min para llegar a ${trip.destinationName}`)}`,
+    'END:VALARM',
+    'BEGIN:VALARM',
+    'TRIGGER:PT0S',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${escapeICS(`Llegaste a ${trip.destinationName}`)}`,
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  return lines.join('\r\n') + '\r\n';
+}
+
+function safeTripFilename(trip) {
+  const sanitize = (s) => s.replace(/[^A-Za-z0-9]+/g, '-');
+  return `viaje-${sanitize(trip.originName)}-a-${sanitize(trip.destinationName)}.ics`;
+}
+
+/**
+ * Hand the trip .ics to the OS via Web Share API (preferred on iOS) or
+ * a download anchor (desktop fallback).
+ */
+export async function shareTripICS(trip) {
+  const ics = buildTripICS(trip);
+  const filename = safeTripFilename(trip);
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const file = new File([blob], filename, { type: 'text/calendar' });
+
+  try {
+    if (
+      typeof navigator !== 'undefined' &&
+      typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: [file] }) &&
+      typeof navigator.share === 'function'
+    ) {
+      await navigator.share({
+        files: [file],
+        title: `Llegada a ${trip.destinationName}`,
+        text: 'Importá el evento al Calendario y iOS te avisará 5 min antes y al llegar.',
+      });
+      return true;
+    }
+  } catch (err) {
+    // user cancelled or share unsupported, fall through
+  }
+
+  try {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Hand the generated .ics to the OS. We try the Web Share API first
  * (gives the user a system sheet to "Add to Calendar"); if that's not
  * available or they cancel, we fall back to a download <a> link.
