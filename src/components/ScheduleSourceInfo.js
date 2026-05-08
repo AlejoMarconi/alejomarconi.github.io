@@ -1,6 +1,9 @@
 import React from 'react';
-import { Box, Typography, Link } from '@mui/material';
+import { Box, Link, Stack, Typography } from '@mui/material';
+import VerifiedIcon from '@mui/icons-material/Verified';
+
 import metadata from '../data/scheduleMetadata.json';
+import { urquizaColors } from '../theme';
 
 function formatVigencia(meta) {
   if (meta.vigencia_text) return meta.vigencia_text;
@@ -28,22 +31,29 @@ const ScheduleSourceInfo = () => {
   return (
     <Box
       sx={{
-        mt: 4,
-        mb: 2,
-        p: 1.5,
-        textAlign: 'center',
-        borderTop: '1px solid #e0e0e0',
+        mt: 2,
+        p: 2,
+        borderRadius: 2,
+        border: `1px solid ${urquizaColors.border}`,
+        bgcolor: urquizaColors.surface,
       }}
     >
-      <Typography variant="caption" color="text.secondary" component="div">
-        Horarios oficiales de Metrovias
-        {vigencia ? ` - ${vigencia}` : ''}
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <VerifiedIcon sx={{ color: urquizaColors.yellow, fontSize: 18 }} />
+        <Typography variant="body2" sx={{ fontWeight: 700 }}>
+          Horarios oficiales de Metrovias
+        </Typography>
+      </Stack>
+      {vigencia && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+          {vigencia}
+        </Typography>
+      )}
       {(url || file) && (
-        <Typography variant="caption" color="text.secondary" component="div">
-          Fuente:{' '}
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          Archivo:{' '}
           {url ? (
-            <Link href={url} target="_blank" rel="noopener noreferrer">
+            <Link href={url} target="_blank" rel="noopener noreferrer" color="primary">
               {file || url}
             </Link>
           ) : (
@@ -52,8 +62,8 @@ const ScheduleSourceInfo = () => {
         </Typography>
       )}
       {fetched && (
-        <Typography variant="caption" color="text.secondary" component="div">
-          Última actualización del archivo: {fetched}
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+          Última verificación automática: {fetched}
         </Typography>
       )}
     </Box>

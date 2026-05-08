@@ -1,14 +1,50 @@
-body {
+html, body, #root {
   margin: 0;
-  font-family: 'Roboto', 'Arial', sans-serif;
+  height: 100%;
+}
+
+body {
+  font-family: 'Roboto', 'Inter', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
-  color: #333;
-  line-height: 1.6;
+  background-color: #0D1117;
+  color: #F0F6FC;
+  line-height: 1.5;
+  /* Stop pull-to-refresh on mobile so the map drag doesn't bounce the page */
+  overscroll-behavior: contain;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'Roboto Mono', source-code-pro, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Leaflet popup styling for the dark theme */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #1C2129;
+  color: #F0F6FC;
+  border: 1px solid #30363D;
+}
+
+.leaflet-popup-content {
+  margin: 10px 12px;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: #8B949E;
+}
+
+.leaflet-control-zoom a {
+  background: #1C2129 !important;
+  color: #F0F6FC !important;
+  border-color: #30363D !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(13, 17, 23, 0.85) !important;
+  color: #8B949E !important;
+}
+
+.leaflet-control-attribution a {
+  color: #FFD500 !important;
 }
