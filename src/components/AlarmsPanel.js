@@ -25,11 +25,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VibrationIcon from '@mui/icons-material/Vibration';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import IosShareIcon from '@mui/icons-material/IosShare';
 import { motion } from 'framer-motion';
 
 import useTrainSchedule, { formatWait } from '../hooks/useTrainSchedule';
 import useNotificationPermission from '../hooks/useNotificationPermission';
 import { computeFireEpoch } from '../hooks/useAlarms';
+import { shareAlarmICS } from '../lib/calendar';
 import { urquizaColors } from '../theme';
 
 function AlarmEditorDialog({ open, onClose, onSave, defaults, stationName }) {
@@ -48,15 +51,25 @@ function AlarmEditorDialog({ open, onClose, onSave, defaults, stationName }) {
     setMinutesBefore(defaults?.minutesBefore || 5);
   }, [open, defaults]);
 
-  const submit = () => {
+  const buildAlarm = () => ({
+    stationName,
+    direction,
+    trainTime,
+    minutesBefore,
+    fireEpoch: computeFireEpoch(trainTime, minutesBefore),
+  });
+
+  const submitInApp = () => {
     if (!trainTime) return;
-    onSave({
-      stationName,
-      direction,
-      trainTime,
-      minutesBefore,
-      fireEpoch: computeFireEpoch(trainTime, minutesBefore),
-    });
+    onSave(buildAlarm());
+    onClose();
+  };
+
+  const submitToCalendar = async () => {
+    if (!trainTime) return;
+    const alarm = { id: `tmp-${Date.now()}`, ...buildAlarm() };
+    onSave(alarm); // also save in-app for completeness
+    await shareAlarmICS(alarm);
     onClose();
   };
 
@@ -131,10 +144,18 @@ function AlarmEditorDialog({ open, onClose, onSave, defaults, stationName }) {
           </Box>
         </Stack>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ flexWrap: 'wrap', gap: 1, px: 2 }}>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={submit} variant="contained" disabled={!trainTime}>
-          Guardar
+        <Button onClick={submitInApp} disabled={!trainTime}>
+          Solo en la app
+        </Button>
+        <Button
+          onClick={submitToCalendar}
+          variant="contained"
+          startIcon={<EventAvailableIcon />}
+          disabled={!trainTime}
+        >
+          Guardar + Calendario
         </Button>
       </DialogActions>
     </Dialog>
@@ -205,34 +226,24 @@ const AlarmsPanel = ({
         </Button>
       </Stack>
 
-      {permState === 'ios-needs-install' && (
-        <Alert severity="info" sx={{ mt: 2 }}>
+      {isIOS && (
+        <Alert
+          severity="info"
+          icon={<IosShareIcon />}
+          sx={{ mt: 2 }}
+        >
           <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
-            Para recibir notificaciones en iPhone, instalá la app primero:
+            Para que iOS te avise aunque cierres la app: usá "Guardar + Calendario"
           </Typography>
-          <Typography variant="caption" component="ol" sx={{ pl: 2, m: 0 }}>
-            <li>Tocá el botón <strong>Compartir</strong> (cuadrado con flecha hacia arriba) abajo en Safari.</li>
-            <li>Bajá y elegí <strong>"Agregar a pantalla de inicio"</strong>.</li>
-            <li>Abrí la app desde el ícono nuevo en tu home, no desde Safari.</li>
-            <li>Volvé a este panel y tocá "Permitir notificaciones".</li>
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            Apple sólo expone las notificaciones a apps web instaladas (iOS 16.4+).
+          <Typography variant="caption" sx={{ display: 'block' }}>
+            iOS no permite a las web apps disparar avisos en background después de unos minutos.
+            La forma confiable es exportar la alarma al Calendario del iPhone:
+            iOS la programa como recordatorio del sistema y suena en pantalla bloqueada
+            con vibración aunque la PWA esté cerrada.
           </Typography>
         </Alert>
       )}
-      {permState === 'ios-needs-update' && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Tu iOS necesita actualizarse a 16.4 o superior para recibir notificaciones desde apps instaladas.
-          Mientras tanto, la alarma vibra y suena con la app abierta.
-        </Alert>
-      )}
-      {permState === 'unsupported' && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Este navegador no soporta notificaciones; la alarma sólo vibrará y sonará con la app abierta.
-        </Alert>
-      )}
-      {permState === 'default' && (
+      {permState === 'default' && !isIOS && (
         <Alert
           severity="info"
           sx={{ mt: 2 }}
@@ -242,19 +253,19 @@ const AlarmsPanel = ({
             </Button>
           }
         >
-          {isIOS && isStandalone
-            ? 'Activá las notificaciones para que el aviso aparezca aunque cierres la app.'
-            : 'Activá las notificaciones para recibir el aviso aunque la pestaña esté en segundo plano.'}
+          Activá las notificaciones para recibir el aviso aunque la pestaña esté en segundo plano.
         </Alert>
       )}
-      {permState === 'denied' && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          Bloqueaste las notificaciones. Habilitalas en Ajustes → Safari → Notificaciones (iOS) o en la configuración del sitio.
+      {permState === 'denied' && !isIOS && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Bloqueaste las notificaciones. Habilitalas en la configuración del sitio,
+          o usá el botón "Calendario" para que el sistema operativo dispare el aviso.
         </Alert>
       )}
-      {permState === 'granted' && isIOS && (
-        <Alert severity="info" sx={{ mt: 2 }}>
-          Tip: en iPhone funcionan mejor las alarmas con menos de ~10 min para el tren — el aviso suena aunque tengas la pantalla bloqueada. Para alarmas a más de 1 hora, mantené la app abierta o reabrila cerca del horario, porque iOS suspende la PWA cerrada.
+      {permState === 'unsupported' && !isIOS && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Este navegador no soporta notificaciones del sistema. Usá "Guardar + Calendario"
+          para agendar el aviso en el calendario del dispositivo.
         </Alert>
       )}
 
@@ -286,6 +297,14 @@ const AlarmsPanel = ({
               }}
               secondaryAction={
                 <Stack direction="row" spacing={0.5}>
+                  <IconButton
+                    size="small"
+                    aria-label="Agregar al Calendario del sistema"
+                    onClick={() => shareAlarmICS(alarm)}
+                    sx={{ color: urquizaColors.yellow }}
+                  >
+                    <EventAvailableIcon fontSize="small" />
+                  </IconButton>
                   <IconButton
                     size="small"
                     aria-label="Probar alarma"
