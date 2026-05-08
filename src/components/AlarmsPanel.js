@@ -152,7 +152,7 @@ const AlarmsPanel = ({
   onConsumeDraft,
 }) => {
   const stationName = nearestStation?.name;
-  const { permission, request, supported } = useNotificationPermission();
+  const { state: permState, request, isIOS, isStandalone } = useNotificationPermission();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draft, setDraft] = useState(null);
 
@@ -205,12 +205,34 @@ const AlarmsPanel = ({
         </Button>
       </Stack>
 
-      {!supported && (
-        <Alert severity="warning" sx={{ mt: 2 }}>
-          Tu navegador no soporta notificaciones; la alarma sólo vibrará y sonará.
+      {permState === 'ios-needs-install' && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+            Para recibir notificaciones en iPhone, instalá la app primero:
+          </Typography>
+          <Typography variant="caption" component="ol" sx={{ pl: 2, m: 0 }}>
+            <li>Tocá el botón <strong>Compartir</strong> (cuadrado con flecha hacia arriba) abajo en Safari.</li>
+            <li>Bajá y elegí <strong>"Agregar a pantalla de inicio"</strong>.</li>
+            <li>Abrí la app desde el ícono nuevo en tu home, no desde Safari.</li>
+            <li>Volvé a este panel y tocá "Permitir notificaciones".</li>
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Apple sólo expone las notificaciones a apps web instaladas (iOS 16.4+).
+          </Typography>
         </Alert>
       )}
-      {supported && permission === 'default' && (
+      {permState === 'ios-needs-update' && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Tu iOS necesita actualizarse a 16.4 o superior para recibir notificaciones desde apps instaladas.
+          Mientras tanto, la alarma vibra y suena con la app abierta.
+        </Alert>
+      )}
+      {permState === 'unsupported' && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          Este navegador no soporta notificaciones; la alarma sólo vibrará y sonará con la app abierta.
+        </Alert>
+      )}
+      {permState === 'default' && (
         <Alert
           severity="info"
           sx={{ mt: 2 }}
@@ -220,12 +242,19 @@ const AlarmsPanel = ({
             </Button>
           }
         >
-          Activá las notificaciones para recibir alertas con la pantalla apagada.
+          {isIOS && isStandalone
+            ? 'Activá las notificaciones para que el aviso aparezca aunque cierres la app.'
+            : 'Activá las notificaciones para recibir el aviso aunque la pestaña esté en segundo plano.'}
         </Alert>
       )}
-      {supported && permission === 'denied' && (
+      {permState === 'denied' && (
         <Alert severity="error" sx={{ mt: 2 }}>
-          Bloqueaste las notificaciones. Habilitalas en la configuración del sitio.
+          Bloqueaste las notificaciones. Habilitalas en Ajustes → Safari → Notificaciones (iOS) o en la configuración del sitio.
+        </Alert>
+      )}
+      {permState === 'granted' && isIOS && (
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Importante: las alarmas se evalúan mientras la app está abierta o instalada. Si cerrás la PWA por completo, la próxima alarma se reprogramará al reabrirla.
         </Alert>
       )}
 
