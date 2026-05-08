@@ -20,6 +20,7 @@ import StationDetector from './components/StationDetector';
 import NextTrainSchedule from './components/NextTrainSchedule';
 import StationMap from './components/StationMap';
 import AlarmsPanel from './components/AlarmsPanel';
+import OnTrainCard from './components/OnTrainCard';
 import ScheduleSourceInfo from './components/ScheduleSourceInfo';
 import useAlarms from './hooks/useAlarms';
 
@@ -33,6 +34,8 @@ function MobileLayout({
   pendingDraft,
   onConsumeDraft,
   onAddAlarmShortcut,
+  trip,
+  setTrip,
 }) {
   const [tab, setTab] = useState(TABS.HOME);
 
@@ -51,6 +54,7 @@ function MobileLayout({
                 }}
               />
             )}
+            <OnTrainCard nearestStation={nearestStation} trip={trip} setTrip={setTrip} />
             <ScheduleSourceInfo />
           </Stack>
         )}
@@ -58,6 +62,7 @@ function MobileLayout({
           <StationMap
             currentLocation={currentLocation}
             nearestStation={nearestStation}
+            trip={trip}
             height={'calc(100vh - 220px)'}
           />
         )}
@@ -106,6 +111,8 @@ function DesktopLayout({
   pendingDraft,
   onConsumeDraft,
   onAddAlarmShortcut,
+  trip,
+  setTrip,
 }) {
   return (
     <Stack direction="row" spacing={3} sx={{ alignItems: 'flex-start' }}>
@@ -117,6 +124,7 @@ function DesktopLayout({
           pendingDraft={pendingDraft}
           onConsumeDraft={onConsumeDraft}
         />
+        <OnTrainCard nearestStation={nearestStation} trip={trip} setTrip={setTrip} />
         <ScheduleSourceInfo />
       </Stack>
 
@@ -124,7 +132,12 @@ function DesktopLayout({
         {nearestStation && (
           <NextTrainSchedule nearestStation={nearestStation} onAddAlarm={onAddAlarmShortcut} />
         )}
-        <StationMap currentLocation={currentLocation} nearestStation={nearestStation} height={520} />
+        <StationMap
+          currentLocation={currentLocation}
+          nearestStation={nearestStation}
+          trip={trip}
+          height={520}
+        />
       </Stack>
     </Stack>
   );
@@ -136,6 +149,7 @@ function App() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pendingDraft, setPendingDraft] = useState(null);
+  const [trip, setTrip] = useState(null);
 
   const alarmsApi = useAlarms();
 
@@ -168,6 +182,8 @@ function App() {
             pendingDraft={pendingDraft}
             onConsumeDraft={consumeDraft}
             onAddAlarmShortcut={handleAddAlarmShortcut}
+            trip={trip}
+            setTrip={setTrip}
           />
         ) : (
           <MobileLayout
@@ -178,6 +194,8 @@ function App() {
             pendingDraft={pendingDraft}
             onConsumeDraft={consumeDraft}
             onAddAlarmShortcut={handleAddAlarmShortcut}
+            trip={trip}
+            setTrip={setTrip}
           />
         )}
         <Footer />
