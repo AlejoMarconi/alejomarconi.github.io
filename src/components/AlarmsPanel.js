@@ -254,7 +254,7 @@ const AlarmsPanel = ({
       )}
       {permState === 'granted' && isIOS && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          Importante: las alarmas se evalúan mientras la app está abierta o instalada. Si cerrás la PWA por completo, la próxima alarma se reprogramará al reabrirla.
+          Tip: en iPhone funcionan mejor las alarmas con menos de ~10 min para el tren — el aviso suena aunque tengas la pantalla bloqueada. Para alarmas a más de 1 hora, mantené la app abierta o reabrila cerca del horario, porque iOS suspende la PWA cerrada.
         </Alert>
       )}
 

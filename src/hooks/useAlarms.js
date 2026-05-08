@@ -151,22 +151,75 @@ export function computeFireEpoch(trainTime, minutesBefore, now = new Date()) {
   return epoch;
 }
 
+function syncToServiceWorker(alarms) {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  // .ready resolves only when there's an active worker; this avoids
+  // racing the install/activate lifecycle on first load.
+  navigator.serviceWorker.ready
+    .then((reg) => {
+      if (!reg || !reg.active) return;
+      reg.active.postMessage({
+        type: 'schedule-alarms',
+        alarms: alarms.filter((a) => !a.fired),
+      });
+    })
+    .catch(() => {});
+}
+
 export default function useAlarms() {
   const [alarms, setAlarms] = useState(() => readStored());
   const tickRef = useRef(null);
 
   useEffect(() => {
     writeStored(alarms);
+    // Push the current pending list to the SW so it can fire timers in
+    // background. We do this on every change AND once at mount via the
+    // initial render of this effect.
+    syncToServiceWorker(alarms);
   }, [alarms]);
 
-  // Tick every 15s to evaluate which alarms should fire.
+  // Re-send to the SW when the page is about to be hidden / closed, so
+  // the SW always has the latest schedule before its parent client goes
+  // away.
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const onHide = () => syncToServiceWorker(alarms);
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onHide);
+    };
+  }, [alarms]);
+
+  // Listen for the SW telling us it already fired an alarm in background.
+  // We mark the alarm as fired but skip re-firing in the page tick.
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return undefined;
+    const onMsg = (event) => {
+      if (event.data && event.data.type === 'alarm-fired') {
+        setAlarms((prev) =>
+          prev.map((a) => (a.id === event.data.id ? { ...a, fired: true } : a)),
+        );
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onMsg);
+    return () => navigator.serviceWorker.removeEventListener('message', onMsg);
+  }, []);
+
+  // Tick every 15s to evaluate alarms in foreground. If the SW already
+  // fired the alarm a while ago (and posted us 'alarm-fired'), we skip
+  // re-firing here. Stale alarms (>1 min past) are silently marked fired
+  // since the user already got the notification from the SW.
   useEffect(() => {
     const tick = () => {
       const now = Date.now();
       let dirty = false;
       const next = alarms.map((a) => {
         if (!a.fired && a.fireEpoch && a.fireEpoch <= now) {
-          fireAlarm(a);
+          if (now - a.fireEpoch < 60 * 1000) {
+            fireAlarm(a);
+          }
           dirty = true;
           return { ...a, fired: true };
         }
@@ -174,7 +227,7 @@ export default function useAlarms() {
       });
       if (dirty) setAlarms(next);
     };
-    tick(); // immediate evaluation
+    tick();
     tickRef.current = setInterval(tick, 15 * 1000);
     return () => clearInterval(tickRef.current);
   }, [alarms]);
