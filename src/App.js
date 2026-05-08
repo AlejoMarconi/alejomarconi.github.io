@@ -8,6 +8,7 @@ import StationMap from './components/StationMap';
 import InfoSection from './components/InfoSection';
 import Footer from './components/Footer';
 import NextTrainSchedule from './components/NextTrainSchedule';
+import ScheduleSourceInfo from './components/ScheduleSourceInfo';
 
 const theme = createTheme({
   palette: {
@@ -61,13 +62,14 @@ function App() {
           {nearestStation && (
             <>
               <NextTrainSchedule nearestStation={nearestStation} />
-              <StationMap 
-                currentLocation={currentLocation} 
-                nearestStation={nearestStation} 
+              <StationMap
+                currentLocation={currentLocation}
+                nearestStation={nearestStation}
               />
             </>
           )}
-          
+
+          <ScheduleSourceInfo />
           <Footer />
         </Box>
       </Container>

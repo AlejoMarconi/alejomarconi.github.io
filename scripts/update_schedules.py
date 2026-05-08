@@ -87,8 +87,16 @@ def download_pdf(url: str, dst: Path) -> None:
     print(f"  wrote {len(data):,} bytes", flush=True)
 
 
-def run_parser(pdf_path: Path) -> int:
-    cmd = [sys.executable, str(PARSER), str(pdf_path), str(OUTPUT_JSON)]
+def run_parser(pdf_path: Path, source_url: str) -> int:
+    source_filename = source_url.rsplit("/", 1)[-1]
+    cmd = [
+        sys.executable,
+        str(PARSER),
+        str(pdf_path),
+        str(OUTPUT_JSON),
+        "--source-url", source_url,
+        "--source-filename", source_filename,
+    ]
     print(f"Running parser: {' '.join(cmd)}", flush=True)
     return subprocess.call(cmd)
 
@@ -108,7 +116,7 @@ def main() -> int:
             print(f"ERROR: download failed: {e}", file=sys.stderr)
             return 2
 
-        rc = run_parser(pdf_path)
+        rc = run_parser(pdf_path, pdf_url)
         return rc
 
 

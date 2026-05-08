@@ -38,13 +38,13 @@ jobs:
       - name: Detect changes
         id: changes
         run: |
-          if git diff --quiet -- src/data/trainSchedules.json; then
+          if git diff --quiet -- src/data/trainSchedules.json src/data/scheduleMetadata.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "No changes to trainSchedules.json"
+            echo "No changes to schedule data"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "trainSchedules.json was updated"
-            git --no-pager diff --stat -- src/data/trainSchedules.json
+            echo "Schedule data was updated"
+            git --no-pager diff --stat -- src/data/trainSchedules.json src/data/scheduleMetadata.json
           fi
 
       - name: Commit and push changes
@@ -52,6 +52,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/trainSchedules.json
+          git add src/data/trainSchedules.json src/data/scheduleMetadata.json
           git commit -m "Update trainSchedules.json from official Metrovias PDF ($(date -u +%Y-%m-%d))"
           git push
+
+      # Pushes authored by GITHUB_TOKEN do not trigger downstream workflows
+      # by design (avoids infinite loops). Trigger the deploy workflow
+      # explicitly so the new schedule reaches Pages.
+      - name: Trigger deploy workflow
+        if: steps.changes.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy.yml --ref main

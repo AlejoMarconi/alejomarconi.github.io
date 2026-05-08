@@ -36,7 +36,10 @@ Exits with non-zero status if any validation issue is found.
 """
 from __future__ import annotations
 
+import argparse
+import datetime as _dt
 import json
+import os
 import re
 import sys
 import unicodedata
@@ -48,6 +51,7 @@ import pdfplumber
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUTPUT = REPO_ROOT / "src" / "data" / "trainSchedules.json"
+DEFAULT_METADATA = REPO_ROOT / "src" / "data" / "scheduleMetadata.json"
 
 # Station order for A Gral. Lemos direction (Lacroze -> Lemos)
 STATIONS_A_LEMOS = [
@@ -210,8 +214,41 @@ def extract_section(
     return out, len(time_rows)
 
 
-def parse_pdf(pdf_path: str | Path) -> tuple[dict, list[str]]:
-    """Parse PDF; return (schedules, parse_warnings)."""
+# Match e.g. "Vigencia a partir del 2 de marzo de 2026" anywhere in the PDF.
+VIGENCIA_RE = re.compile(
+    r"Vigencia\s+a\s+partir\s+del?\s+"
+    r"(?P<day>\d{1,2})\s+de\s+(?P<month>[a-záéíóú]+)\s+de\s+(?P<year>\d{4})",
+    re.IGNORECASE,
+)
+SPANISH_MONTHS = {
+    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
+    "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
+    "noviembre": 11, "diciembre": 12,
+}
+
+
+def extract_vigencia(pdf) -> tuple[str | None, str | None]:
+    """Look for 'Vigencia a partir del DD de mes de YYYY' in the PDF text.
+    Return (raw_text, iso_date) or (None, None) if not found."""
+    for page in pdf.pages:
+        text = page.extract_text() or ""
+        m = VIGENCIA_RE.search(text)
+        if not m:
+            continue
+        raw = m.group(0)
+        month = SPANISH_MONTHS.get(m.group("month").lower())
+        if month is None:
+            return raw, None
+        try:
+            iso = _dt.date(int(m.group("year")), month, int(m.group("day"))).isoformat()
+            return raw, iso
+        except ValueError:
+            return raw, None
+    return None, None
+
+
+def parse_pdf(pdf_path: str | Path) -> tuple[dict, list[str], dict]:
+    """Parse PDF; return (schedules, parse_warnings, metadata)."""
     warnings: list[str] = []
 
     schedules = {
@@ -219,10 +256,17 @@ def parse_pdf(pdf_path: str | Path) -> tuple[dict, list[str]]:
         for s in STATIONS_A_LEMOS
     }
     pages_seen = defaultdict(list)
+    metadata: dict = {"page_count": 0, "vigencia_text": None, "vigencia_date": None}
 
     with pdfplumber.open(pdf_path) as pdf:
         total_pages = len(pdf.pages)
+        metadata["page_count"] = total_pages
+        v_text, v_iso = extract_vigencia(pdf)
+        metadata["vigencia_text"] = v_text
+        metadata["vigencia_date"] = v_iso
         print(f"PDF: {total_pages} page(s)")
+        if v_text:
+            print(f"  vigencia: {v_text} (iso: {v_iso})")
         for page_num, page in enumerate(pdf.pages, 1):
             rows = extract_char_rows(page)
 
@@ -281,7 +325,7 @@ def parse_pdf(pdf_path: str | Path) -> tuple[dict, list[str]]:
         else:
             print(f"  {d:20s}: pages {pages_seen[d]}")
 
-    return schedules, warnings
+    return schedules, warnings, metadata
 
 
 def validate(schedules: dict) -> list[str]:
@@ -358,22 +402,43 @@ def validate(schedules: dict) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) < 2:
-        print(
-            "Usage: parse_horarios_pdf.py <pdf-path> [output-json-path]",
-            file=sys.stderr,
-        )
-        return 2
+    parser = argparse.ArgumentParser(
+        description="Parse Metrovias Urquiza schedule PDF -> JSON + metadata."
+    )
+    parser.add_argument("pdf", help="path to the PDF file")
+    parser.add_argument(
+        "output",
+        nargs="?",
+        default=str(DEFAULT_OUTPUT),
+        help="output trainSchedules.json path",
+    )
+    parser.add_argument(
+        "--metadata-output",
+        default=str(DEFAULT_METADATA),
+        help="output scheduleMetadata.json path",
+    )
+    parser.add_argument(
+        "--source-url",
+        default=os.environ.get("SCHEDULE_SOURCE_URL"),
+        help="URL the PDF was downloaded from (recorded in metadata)",
+    )
+    parser.add_argument(
+        "--source-filename",
+        default=os.environ.get("SCHEDULE_SOURCE_FILENAME"),
+        help="original filename of the PDF (recorded in metadata)",
+    )
+    args = parser.parse_args(argv[1:])
 
-    pdf_path = Path(argv[1])
-    output_path = Path(argv[2]) if len(argv) >= 3 else DEFAULT_OUTPUT
+    pdf_path = Path(args.pdf)
+    output_path = Path(args.output)
+    metadata_path = Path(args.metadata_output)
 
     if not pdf_path.exists():
         print(f"PDF not found: {pdf_path}", file=sys.stderr)
         return 2
 
     print(f"Parsing: {pdf_path}")
-    schedules, warnings = parse_pdf(pdf_path)
+    schedules, warnings, pdf_meta = parse_pdf(pdf_path)
 
     if warnings:
         print("\nParse warnings:")
@@ -394,10 +459,32 @@ def main(argv: list[str]) -> int:
         r_n = len(schedules["General Lemos"][d]["a_lacroze"])
         print(f"  {d:20s} | a_lemos@Lacroze={l_n:3d} | a_lacroze@Lemos={r_n:3d}")
 
+    # Compose metadata
+    source_filename = args.source_filename
+    if not source_filename and args.source_url:
+        source_filename = args.source_url.rsplit("/", 1)[-1]
+    if not source_filename:
+        source_filename = pdf_path.name
+
+    metadata = {
+        "source_url": args.source_url,
+        "source_filename": source_filename,
+        "vigencia_text": pdf_meta["vigencia_text"],
+        "vigencia_date": pdf_meta["vigencia_date"],
+        "page_count": pdf_meta["page_count"],
+        "fetched_at": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+        "validation_passed": not issues,
+    }
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as f:
         json.dump(schedules, f, ensure_ascii=False, indent=4)
     print(f"\nWrote: {output_path}")
+
+    metadata_path.parent.mkdir(parents=True, exist_ok=True)
+    with metadata_path.open("w", encoding="utf-8") as f:
+        json.dump(metadata, f, ensure_ascii=False, indent=2)
+    print(f"Wrote: {metadata_path}")
 
     return 1 if (issues or warnings) else 0
 
