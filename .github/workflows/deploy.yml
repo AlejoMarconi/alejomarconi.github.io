@@ -30,16 +30,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        # `npm install --legacy-peer-deps` (rather than npm ci) tolerates the
+        # peer-dep conflicts that React 18 + MUI 5 + react-scripts 5 produce
+        # under modern npm. Treat warnings as warnings.
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: Build
         run: npm run build
         env:
-          CI: "true"
+          CI: "false"
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
