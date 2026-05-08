@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Card, Chip, Stack, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import L from 'leaflet';
@@ -14,6 +14,7 @@ import {
 } from 'react-leaflet';
 
 import { stations as stationsData } from '../data/stations';
+import { routeStationsBetween } from '../lib/etaCalc';
 import useTrainSchedule, { formatWait } from '../hooks/useTrainSchedule';
 import { urquizaColors } from '../theme';
 
@@ -41,6 +42,15 @@ const nearestStationIcon = L.divIcon({
   className: 'urquiza-nearest-marker',
   iconSize: [18, 18],
   iconAnchor: [9, 9],
+});
+
+const destinationStationIcon = L.divIcon({
+  html: `<div style="position:relative;width:22px;height:22px;">
+    <div style="position:absolute;inset:0;width:22px;height:22px;border-radius:50%;background:${urquizaColors.yellow};border:3px solid ${urquizaColors.red};box-shadow:0 0 12px ${urquizaColors.red}66;"></div>
+  </div>`,
+  className: 'urquiza-destination-marker',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
 });
 
 function FitToRoute({ currentLocation, nearestStation, autoCenter }) {
@@ -95,8 +105,31 @@ function StationPopup({ stationName }) {
   );
 }
 
-const StationMap = ({ currentLocation, nearestStation, autoCenter = true, height = 360 }) => {
+const StationMap = ({
+  currentLocation,
+  nearestStation,
+  trip = null,
+  autoCenter = true,
+  height = 360,
+}) => {
   const stations = useMemo(() => stationsData, []);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const tripRoute = useMemo(() => {
+    if (!trip) return null;
+    const seg = routeStationsBetween(trip.originName, trip.destinationName);
+    if (!seg) return null;
+    return seg.map(([lat, lng]) => [lat, lng]);
+  }, [trip]);
+
+  const minutesUntilArrival = trip
+    ? Math.max(0, Math.round((trip.arrivalEpoch - now.getTime()) / 60000))
+    : null;
 
   return (
     <Card
@@ -133,7 +166,28 @@ const StationMap = ({ currentLocation, nearestStation, autoCenter = true, height
         )}
       </Stack>
 
-      <Box sx={{ height, width: '100%' }}>
+      <Box sx={{ position: 'relative', height, width: '100%' }}>
+        {trip && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 12,
+              right: 12,
+              zIndex: 500,
+              bgcolor: urquizaColors.yellow,
+              color: '#000',
+              px: 1.25,
+              py: 0.75,
+              borderRadius: 2,
+              boxShadow: 3,
+              fontWeight: 700,
+              fontSize: 13,
+              pointerEvents: 'none',
+            }}
+          >
+            → {trip.destinationName} · llegás en {minutesUntilArrival} min
+          </Box>
+        )}
         <MapContainer
           bounds={ROUTE_BOUNDS}
           boundsOptions={{ padding: [30, 30] }}
@@ -151,15 +205,28 @@ const StationMap = ({ currentLocation, nearestStation, autoCenter = true, height
             pathOptions={{ color: urquizaColors.yellow, weight: 4, opacity: 0.9 }}
           />
 
+          {tripRoute && (
+            <Polyline
+              positions={tripRoute}
+              pathOptions={{
+                color: urquizaColors.red,
+                weight: 6,
+                opacity: 0.95,
+              }}
+            />
+          )}
+
           {stations.map((station) => {
             const [lat, lng, name] = station;
             const isNearest = nearestStation?.name === name;
+            const isDestination = trip?.destinationName === name;
+            const icon = isDestination
+              ? destinationStationIcon
+              : isNearest
+              ? nearestStationIcon
+              : stationIcon;
             return (
-              <Marker
-                key={name}
-                position={[lat, lng]}
-                icon={isNearest ? nearestStationIcon : stationIcon}
-              >
+              <Marker key={name} position={[lat, lng]} icon={icon}>
                 <Popup>
                   <StationPopup stationName={name} />
                 </Popup>
