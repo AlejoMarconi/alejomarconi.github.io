@@ -41,7 +41,7 @@ function MobileLayout({
 
   return (
     <>
-      <Box sx={{ pb: 9 }}>
+      <Box sx={{ pb: 'calc(72px + env(safe-area-inset-bottom))' }}>
         {tab === TABS.HOME && (
           <Stack spacing={2}>
             <StationDetector {...detectorProps} />
@@ -88,6 +88,11 @@ function MobileLayout({
           bgcolor: urquizaColors.surface,
           borderTop: `1px solid ${urquizaColors.border}`,
           zIndex: 1300,
+          // Reserve space for the iOS home-indicator without shrinking the tap targets.
+          boxSizing: 'content-box',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
           '& .Mui-selected': { color: urquizaColors.yellow },
         }}
       >

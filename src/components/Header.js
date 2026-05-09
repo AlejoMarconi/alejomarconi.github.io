@@ -12,8 +12,10 @@ const Header = () => {
     <Box
       component="header"
       sx={{
-        py: { xs: 2, md: 3 },
-        px: { xs: 2, md: 4 },
+        pt: { xs: 'calc(env(safe-area-inset-top) + 16px)', md: 'calc(env(safe-area-inset-top) + 24px)' },
+        pb: { xs: 2, md: 3 },
+        pl: { xs: 'calc(env(safe-area-inset-left) + 16px)', md: 'calc(env(safe-area-inset-left) + 32px)' },
+        pr: { xs: 'calc(env(safe-area-inset-right) + 16px)', md: 'calc(env(safe-area-inset-right) + 32px)' },
         background: `linear-gradient(135deg, ${urquizaColors.surface} 0%, ${urquizaColors.surfaceElevated} 100%)`,
         borderBottom: `1px solid ${urquizaColors.border}`,
       }}
