@@ -19,6 +19,7 @@ const useStationDetector = ({ setCurrentLocation, setNearestStation, setError, s
         watchIdRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Función para calcular la distancia entre dos puntos usando la fórmula de Haversine
@@ -179,6 +180,7 @@ const useStationDetector = ({ setCurrentLocation, setNearestStation, setError, s
         maximumAge: 0
       }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCurrentLocation, setNearestStation, setError, setLoading]);
 
   // Función para forzar la solicitud de permisos
@@ -223,6 +225,7 @@ const useStationDetector = ({ setCurrentLocation, setNearestStation, setError, s
         maximumAge: 0
       }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCurrentLocation, setNearestStation, setLoading]);
 
   // Detener seguimiento continuo

@@ -173,7 +173,7 @@ const AlarmsPanel = ({
   onConsumeDraft,
 }) => {
   const stationName = nearestStation?.name;
-  const { state: permState, request, isIOS, isStandalone } = useNotificationPermission();
+  const { state: permState, request, isIOS } = useNotificationPermission();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [draft, setDraft] = useState(null);
 
