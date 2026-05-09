@@ -88,8 +88,9 @@ function MobileLayout({
           bgcolor: urquizaColors.surface,
           borderTop: `1px solid ${urquizaColors.border}`,
           zIndex: 1300,
-          // Reserve space for the iOS home-indicator without shrinking the tap targets.
-          boxSizing: 'content-box',
+          // Grow the bar so the iOS home-indicator area is filled with the
+          // surface color, but keep the tap-target row at its default 56px.
+          height: 'calc(56px + env(safe-area-inset-bottom))',
           paddingBottom: 'env(safe-area-inset-bottom)',
           paddingLeft: 'env(safe-area-inset-left)',
           paddingRight: 'env(safe-area-inset-right)',
